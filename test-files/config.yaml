@@ -1,0 +1,2 @@
+database_url: postgres://localhost:5432/db
+database_username: postgres
