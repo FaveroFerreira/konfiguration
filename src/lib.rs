@@ -1,25 +1,14 @@
-use std::error::Error as StdError;
-use std::fmt::Display;
-
 use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
+use error::Error;
+use error::KonfigurationResult;
+
+mod error;
+
 thread_local! {
     static REGEX: Regex = Regex::new(r#"\$\{([^:]+)(?::([^}]+))?\}"#).unwrap();
-}
-
-#[derive(Debug)]
-pub struct Error {
-    message: String,
-}
-
-impl StdError for Error {}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.message)
-    }
 }
 
 pub struct Konfiguration {
@@ -33,8 +22,10 @@ impl Konfiguration {
         }
     }
 
-    pub fn parse<T: DeserializeOwned>(self) -> Result<T, Box<dyn StdError>> {
-        let file = std::fs::File::open(self.file_path)?;
+    pub fn parse<T: DeserializeOwned>(self) -> KonfigurationResult<T> {
+        let file = std::fs::File::open(self.file_path)
+            .map_err(|err| Error::FileNotFound { source: err })?;
+
         let mut json_config: Value = serde_json::from_reader(file)?;
 
         expand_env_vars(&mut json_config)?;
@@ -49,7 +40,7 @@ fn is_numeric(str: &str) -> bool {
     str.parse::<i64>().is_ok() || str.parse::<f64>().is_ok()
 }
 
-fn expand_env_vars(config: &mut Value) -> Result<(), Box<dyn StdError>> {
+fn expand_env_vars(config: &mut Value) -> KonfigurationResult<()> {
     match config {
         Value::String(value) => {
             if let Some(captures) = REGEX.with(|re| re.captures(value)) {
@@ -59,11 +50,8 @@ fn expand_env_vars(config: &mut Value) -> Result<(), Box<dyn StdError>> {
                 let val = match std::env::var(env) {
                     Ok(val) => val,
                     Err(_) => default
-                        .ok_or(Error {
-                            message: format!(
-                                "Environment variable {} not set with no default value",
-                                env
-                            ),
+                        .ok_or(Error::DefaultMissing {
+                            env: env.to_string(),
                         })?
                         .to_string(),
                 };
