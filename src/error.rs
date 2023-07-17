@@ -5,6 +5,9 @@ pub enum Error {
     #[error("Configuration file: {source}")]
     FileNotFound { source: std::io::Error },
 
+    #[error("Unsupported configuration file format: {format}")]
+    UnsupportedFormat { format: String },
+
     #[error("Environment value {env} is not present and no default value was provided")]
     DefaultMissing { env: String },
 
