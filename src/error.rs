@@ -10,4 +10,7 @@ pub enum Error {
 
     #[error("Error parsing configuration file: {0}")]
     JsonParse(#[from] serde_json::Error),
+
+    #[error("Error parsing configuration file: {0}")]
+    YamlParse(#[from] serde_yaml::Error),
 }
