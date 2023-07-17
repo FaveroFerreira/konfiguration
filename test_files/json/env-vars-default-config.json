@@ -1,12 +1,12 @@
 {
-  "server_port": 8080,
+  "server_port": "${SERVER_PORT:3000}",
   "database": {
     "host": "postgres://localhost:5432/db",
     "username": "postgres",
-    "password": "postgres"
+    "password": "${POSTGRES_PASSWORD:postgres}"
   },
   "api": {
     "url": "https://api.example.com",
-    "token": "1234567890"
+    "token": "${API_TOKEN:token}"
   }
 }

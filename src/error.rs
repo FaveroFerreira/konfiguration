@@ -2,8 +2,11 @@ pub type KonfigurationResult<T> = Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Configuration file: {source}")]
-    FileNotFound { source: std::io::Error },
+    #[error("Configuration file at {path}")]
+    FileNotFound { path: String },
+
+    #[error("Error trying to read data from file: {0}")]
+    FileSystem(#[from] std::io::Error),
 
     #[error("Unsupported configuration file format: {format}")]
     UnsupportedFormat { format: String },

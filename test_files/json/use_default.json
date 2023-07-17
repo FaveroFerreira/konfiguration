@@ -1,3 +1,0 @@
-{
-  "comes_from_env": "${FROM_ENV:-default}"
-}

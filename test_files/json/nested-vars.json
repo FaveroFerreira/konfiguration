@@ -1,8 +1,0 @@
-{
-  "server_port": "${SERVER_PORT}",
-  "database": {
-    "url": "${DB_URL}",
-    "user": "${DB_USER}",
-    "password": "${DB_PASSWORD}"
-  }
-}
