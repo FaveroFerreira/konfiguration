@@ -3,7 +3,7 @@
 ![Rust](https://img.shields.io/badge/rust-stable-brightgreen.svg)
 [![Docs.rs](https://docs.rs/konfiguration/badge.svg)](https://docs.rs/konfiguration)
 
-Simple Json configuration for Rust applications.
+Simple Json/Yaml configuration for Rust applications.
 
 ## Usage
 
@@ -18,6 +18,8 @@ serde = { version = "1.0", features = ["derive"] }
 ```
 
 Create your configuration file:
+
+In Json:
 ```json
 {
   "server_port": 8080,
@@ -27,6 +29,15 @@ Create your configuration file:
     "password": "${POSTGRES_PASSWORD_ENV:default}"
   }
 }
+```
+
+Or in Yaml:
+```yaml
+server_port: 8080
+database:
+  url: postgres://localhost:5432/db
+  username: postgres
+  password: ${POSTGRES_PASSWORD_ENV:default}
 ```
 
 Load the configuration file:
