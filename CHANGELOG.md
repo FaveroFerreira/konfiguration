@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Feature flags for configuration file types.
 
+# 0.2.2 (17. July, 2023)
+
+- Fixes Konfiguration version in README.md.
+- Adds Konfiguration docs to Cargo.toml.
+
 # 0.2.1 (17. July, 2023)
 
 - Fixes bug that prevents the use of files with the yml extension.
