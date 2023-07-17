@@ -45,6 +45,7 @@ Load the configuration file:
 use serde::Deserialize;
 use konfiguration::Konfiguration;
 
+#[derive(Debug, Deserialize)]
 pub struct DatabaseConfig {
     url: String,
     username: String,
