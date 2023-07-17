@@ -1,9 +1,10 @@
+use std::fs::File;
+use std::path::Path;
+
 use regex::Regex;
 use serde::de::DeserializeOwned;
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
-use std::fs::File;
-use std::path::Path;
 
 use error::Error;
 use error::KonfigurationResult;
@@ -153,7 +154,7 @@ mod tests {
     fn json_should_load_default_value_if_env_var_is_missing() {
         std::env::remove_var("DATABASE_PASSWORD");
 
-        let json_config: DatabaseConfig = Konfiguration::from_file("test-files/config.json")
+        let json_config: DatabaseConfig = Konfiguration::from_file("test_files/json/config.json")
             .parse()
             .unwrap();
 
@@ -163,7 +164,7 @@ mod tests {
 
     #[test]
     fn yaml_should_load_default_value_if_env_var_is_missing() {
-        let yaml_config: DatabaseConfig = Konfiguration::from_file("test-files/config.yaml")
+        let yaml_config: DatabaseConfig = Konfiguration::from_file("test_files/yaml/config.yaml")
             .parse()
             .unwrap();
 
@@ -181,7 +182,7 @@ mod tests {
         std::env::set_var("NOT_MISSING", "from env");
 
         let json_config: WithEnvAndDefault =
-            Konfiguration::from_file("test-files/config-with-env-vars.json")
+            Konfiguration::from_file("test_files/json/config-with-env-vars.json")
                 .parse()
                 .unwrap();
 
@@ -191,7 +192,7 @@ mod tests {
     #[test]
     fn yaml_should_prioritize_env_var_if_its_set() {
         let yaml_config: WithEnvAndDefault =
-            Konfiguration::from_file("test-files/config-with-env-vars.yaml")
+            Konfiguration::from_file("test_files/yaml/config-with-env-vars.yaml")
                 .parse()
                 .unwrap();
 
@@ -205,7 +206,7 @@ mod tests {
 
     #[test]
     fn json_should_use_default_if_env_var_is_not_set() {
-        let json_config: DefaultOnly = Konfiguration::from_file("test-files/use_default.json")
+        let json_config: DefaultOnly = Konfiguration::from_file("test_files/json/use_default.json")
             .parse()
             .unwrap();
 
@@ -214,7 +215,7 @@ mod tests {
 
     #[test]
     fn yaml_should_use_default_if_env_var_is_not_set() {
-        let yaml_config: DefaultOnly = Konfiguration::from_file("test-files/use_default.yaml")
+        let yaml_config: DefaultOnly = Konfiguration::from_file("test_files/yaml/use_default.yaml")
             .parse()
             .unwrap();
 
@@ -241,7 +242,7 @@ mod tests {
         std::env::set_var("DB_USER", "postgres");
         std::env::set_var("DB_PASSWORD", "postgres");
 
-        let json_config: AppConfig = Konfiguration::from_file("test-files/nested-vars.json")
+        let json_config: AppConfig = Konfiguration::from_file("test_files/json/nested-vars.json")
             .parse()
             .unwrap();
 
@@ -253,7 +254,7 @@ mod tests {
 
     #[test]
     fn yaml_can_handle_nested_objects() {
-        let yaml_config: AppConfig = Konfiguration::from_file("test-files/nested-vars.json")
+        let yaml_config: AppConfig = Konfiguration::from_file("test_files/yaml/nested-vars.yaml")
             .parse()
             .unwrap();
 
