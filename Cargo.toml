@@ -1,6 +1,6 @@
 [package]
 name = "konfiguration"
-version = "0.1.0"
+version = "0.2.0"
 rust-version = "1.60"
 description = "Json configuration for Rust applications"
 homepage = "https://github.com/faveroferreira/konfiguration"
