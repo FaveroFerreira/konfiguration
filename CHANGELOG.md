@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Feature flags for configuration file types.
 
+# 0.2.1 (17. July, 2023)
+
+- Fixes bug that prevents the use of files with the yml extension.
+
 # 0.2.0 (17. July, 2023)
 
 - Feature support for Yaml configuration files
