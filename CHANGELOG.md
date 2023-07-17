@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Space for unreleased changes
 
-# 1.0.0 (17. July, 2023)
+# 0.2.0 (17. July, 2023)
 
 - Feature support for Yaml configuration files
-- Fix changelog example.
+- Fix changelog usage example.
 
 
 # 0.1.0 (16. July, 2023)
