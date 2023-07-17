@@ -11,6 +11,45 @@ mod json;
 mod utils;
 mod yaml;
 
+/// Serialize and Deserialize configuration files.
+///
+/// # Example
+///
+/// In your config.json file:
+/// ```json
+/// {
+///     "server_port": 8080,
+///     "database": {
+///         "host": "localhost",
+///         "username": "root",
+///         "password": "password"
+///     }
+/// }
+/// ```
+///
+/// In your main.rs file:
+/// ```rust
+/// use konfiguration::Konfiguration;
+///
+/// #[derive(Debug, serde::Deserialize)]
+/// pub struct DatabaseConfig {
+///     pub host: String,
+///     pub username: String,
+///     pub password: String,
+/// }
+///
+/// #[derive(Debug, serde::Deserialize)]
+/// pub struct AppConfig {
+///     pub server_port: u16,
+///     pub database: DatabaseConfig,
+/// }
+///
+/// fn main() {
+///    let config = Konfiguration::from_file("test_files/json/config.json").parse::<AppConfig>().unwrap();
+///
+///     println!("{:#?}", config);
+/// }
+///
 pub struct Konfiguration {
     file_path: String,
 }
