@@ -26,11 +26,11 @@ impl Konfiguration {
         let file = std::fs::File::open(self.file_path)
             .map_err(|err| Error::FileNotFound { source: err })?;
 
-        let mut json_config: Value = serde_json::from_reader(file)?;
+        let mut config: Value = serde_json::from_reader(file)?;
 
-        expand_env_vars(&mut json_config)?;
+        json_expand_env_vars(&mut config)?;
 
-        let config = serde_json::from_value(json_config)?;
+        let config = serde_json::from_value(config)?;
 
         Ok(config)
     }
@@ -40,22 +40,32 @@ fn is_numeric(str: &str) -> bool {
     str.parse::<i64>().is_ok() || str.parse::<f64>().is_ok()
 }
 
-fn expand_env_vars(config: &mut Value) -> KonfigurationResult<()> {
+
+fn expand_env_vars(value: &mut str) -> KonfigurationResult<Option<String>> {
+    match REGEX.with(|re| re.captures(value)) {
+        Some(captures) => {
+            let env = captures.get(1).unwrap().as_str();
+            let default = captures.get(2).map(|m| m.as_str());
+
+            let val = match std::env::var(env) {
+                Ok(val) => val,
+                Err(_) => default
+                    .ok_or(Error::DefaultMissing {
+                        env: env.to_string(),
+                    })?
+                    .to_string(),
+            };
+
+            Ok(Some(val))
+        }
+        _ => Ok(None)
+    }
+}
+
+fn json_expand_env_vars(config: &mut Value) -> KonfigurationResult<()> {
     match config {
         Value::String(value) => {
-            if let Some(captures) = REGEX.with(|re| re.captures(value)) {
-                let env = captures.get(1).unwrap().as_str();
-                let default = captures.get(2).map(|m| m.as_str());
-
-                let val = match std::env::var(env) {
-                    Ok(val) => val,
-                    Err(_) => default
-                        .ok_or(Error::DefaultMissing {
-                            env: env.to_string(),
-                        })?
-                        .to_string(),
-                };
-
+            if let Ok(Some(val)) = expand_env_vars(value) {
                 if is_numeric(&val) {
                     *config = Value::Number(val.parse::<serde_json::Number>()?);
                 } else {
@@ -65,7 +75,7 @@ fn expand_env_vars(config: &mut Value) -> KonfigurationResult<()> {
         }
         Value::Object(o) => {
             for (_, value) in o {
-                expand_env_vars(value)?;
+                json_expand_env_vars(value)?;
             }
         }
         _ => {}
