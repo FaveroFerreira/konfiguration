@@ -44,11 +44,9 @@ mod yaml;
 ///     pub database: DatabaseConfig,
 /// }
 ///
-/// fn main() {
-///    let config = Konfiguration::from_file("test_files/json/config.json").parse::<AppConfig>().unwrap();
+/// let config = Konfiguration::from_file("test_files/json/config.json").parse::<AppConfig>().unwrap();
 ///
-///     println!("{:#?}", config);
-/// }
+/// println!("{:#?}", config);
 ///
 pub struct Konfiguration {
     file_path: String,
