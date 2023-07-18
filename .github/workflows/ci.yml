@@ -6,7 +6,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -Dwarning
+  RUSTFLAGS: -Dwarnings
 
 jobs:
   build:
