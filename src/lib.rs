@@ -1,109 +1,40 @@
-use std::collections::HashMap;
-use std::path::Path;
+use std::fs;
 
-use serde::de::DeserializeOwned;
-use serde::{de, Deserialize, Serialize};
-use serde_untagged::UntaggedEnumVisitor;
-use toml::Value;
+use serde::Deserialize;
+use toml::de::ValueDeserializer;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ConfigurationManifest(HashMap<String, ConfigurationEntry>);
+use crate::error::{Error, KonfigurationResult};
+use crate::value::{
+    ConfigurationEntry, ConfigurationManifest, DetailedConfigurationEntry, TomlMap, TomlValue,
+};
 
-#[derive(Debug, Serialize)]
-#[serde(untagged)]
-pub enum ConfigurationEntry {
-    Simple(Value),
-    Detailed(DetailedConfigurationEntry),
-    Table(HashMap<String, ConfigurationEntry>),
-}
+mod de;
+pub mod error;
+mod value;
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct DetailedConfigurationEntry {
-    env: Option<String>,
-    default: Value,
-}
-
-impl<'de> de::Deserialize<'de> for ConfigurationEntry {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        UntaggedEnumVisitor::new()
-            .expecting(
-                "a configuration like \"0.9.8\" or a \
-                     detailed configuration like { env = \"REPLACE_WITH_THIS_ENV\", version = \"0.9.8\" }",
-            )
-            .i8(|value| {
-                Ok(ConfigurationEntry::Simple(Value::Integer(
-                    value.into(),
-                )))
-            })
-            .i16(|value| {
-                Ok(ConfigurationEntry::Simple(Value::Integer(
-                    value.into(),
-                )))
-            })
-            .i32(|value| {
-                Ok(ConfigurationEntry::Simple(Value::Integer(
-                    value.into(),
-                )))
-            })
-            .i64(|value| {
-                Ok(ConfigurationEntry::Simple(Value::Integer(
-                    value.into(),
-                )))
-            })
-            .u8(|value| {
-                Ok(ConfigurationEntry::Simple(Value::Integer(
-                    value.into(),
-                )))
-            })
-            .u16(|value| {
-                Ok(ConfigurationEntry::Simple(Value::Integer(
-                    value.into(),
-                )))
-            })
-            .f32(|value| Ok(ConfigurationEntry::Simple(Value::Float(value.into()))))
-            .f64(|value| Ok(ConfigurationEntry::Simple(Value::Float(value.into()))))
-            .char(|value| {
-                Ok(ConfigurationEntry::Simple(Value::String(
-                    value.to_string(),
-                )))
-            })
-            .string(|value| {
-                Ok(ConfigurationEntry::Simple(Value::String(
-                    value.to_string(),
-                )))
-            })
-            .seq(|seq| {
-                let array: Value = seq.deserialize().unwrap();
-
-
-
-                Ok(ConfigurationEntry::Simple(Value::Array(array.as_array().unwrap().to_owned())))
-            })
-            .map(|value| {
-                let map: Value = value.deserialize()?;
-                let mut map = map.as_table().unwrap().clone();
-
-                if map.contains_key("env") || map.contains_key("default") {
-                    Ok(ConfigurationEntry::Detailed(DetailedConfigurationEntry {
-                        env: map
-                            .remove("env")
-                            .and_then(|v| v.as_str().map(|s| s.to_string())),
-                        default: map.remove("default").unwrap(),
-                    }))
-                } else {
-                    let str = toml::to_string(&map).unwrap();
-
-                    Ok(ConfigurationEntry::Table(toml::from_str(&str).unwrap()))
-                }
-            })
-            .deserialize(deserializer)
-    }
-}
-
+/// A configuration loader.
+///
+/// # Examples
+///
+/// ```rust
+/// use konfiguration::Konfiguration;
+///
+/// #[derive(Debug, serde::Deserialize)]
+/// struct Config {
+///     profile: String,
+///     postgres: Postgres
+/// }
+///
+/// #[derive(Debug, serde::Deserialize)]
+/// struct Postgres {
+///     host: String,
+///     port: u16,   
+/// }
+///
+/// let config = Konfiguration::from_file("test_files/config.toml")
+///     .parse::<Config>()
+///     .unwrap();
+///
 pub struct Konfiguration {
     file_path: String,
 }
@@ -115,82 +46,110 @@ impl Konfiguration {
         }
     }
 
-    pub fn parse<T: DeserializeOwned>(self) -> anyhow::Result<T> {
-        let path = Path::new(&self.file_path);
+    pub fn parse<T: serde::de::DeserializeOwned>(self) -> KonfigurationResult<T> {
+        let text = fs::read_to_string(self.file_path)?;
+        let manifest = toml::from_str::<ConfigurationManifest>(&text)?;
+        let simple_toml = simplify(manifest)?;
 
-        let string = std::fs::read_to_string(path)?;
-
-        let manifest: ConfigurationManifest = toml::from_str(&string)?;
-
-        let mut config = toml::map::Map::new();
-
-        expand_env_vars(&mut config, manifest);
-
-        let t = T::deserialize(config).unwrap();
-
-        Ok(t)
+        Ok(T::deserialize(simple_toml)?)
     }
 }
 
-fn expand_env_vars(configs: &mut toml::map::Map<String, Value>, manifest: ConfigurationManifest) {
-    for (name, entry) in manifest.0 {
-        match entry {
-            ConfigurationEntry::Simple(v) => {
-                configs.insert(name, v);
-            }
-            ConfigurationEntry::Detailed(DetailedConfigurationEntry { env, default }) => {
-                if let Some(env) = env {
-                    let env_val = std::env::var(env).ok();
+/// Takes a configuration manifest and simplifies it into a TOML value.
+fn simplify(manifest: ConfigurationManifest) -> KonfigurationResult<TomlMap> {
+    let mut map = TomlMap::new();
 
-                    match env_val {
-                        None => configs.insert(name, default),
-                        Some(var) => match default {
-                            Value::String(_) => configs.insert(name, Value::String(var)),
-                            Value::Integer(_) => {
-                                configs.insert(name, Value::Integer(var.parse().unwrap()))
-                            }
-                            Value::Float(_) => {
-                                configs.insert(name, Value::Float(var.parse().unwrap()))
-                            }
-                            Value::Boolean(_) => {
-                                configs.insert(name, Value::Boolean(var.parse().unwrap()))
-                            }
-                            Value::Datetime(_) => {
-                                configs.insert(name, Value::Datetime(var.parse().unwrap()))
-                            }
-                            Value::Array(_) => {
-                                let values = var.split(',').collect::<Vec<_>>();
+    for (key, config_entry) in manifest {
+        let value = match config_entry {
+            ConfigurationEntry::Simple(value) => value,
+            ConfigurationEntry::Detailed(detailed) => expand_env_var(detailed)?,
+            ConfigurationEntry::Table(table) => {
+                let simplified = simplify(table)?;
 
-                                let mut arr = Vec::new();
-
-                                for val in values {
-                                    arr.push(toml::from_str(val).unwrap());
-                                }
-
-                                configs.insert(name, Value::Array(arr))
-                            }
-                            Value::Table(_) => unreachable!(
-                                "this should be handled by the table stuff, how did it get here?"
-                            ),
-                        },
-                    };
-                } else {
-                    configs.insert(name, default);
-                }
-            }
-            ConfigurationEntry::Table(t) => {
-                let mut nested = toml::map::Map::new();
-
-                expand_env_vars(&mut nested, ConfigurationManifest(t));
-
-                configs.insert(name, Value::Table(nested));
+                TomlValue::Table(simplified)
             }
         };
+
+        map.insert(key, value);
     }
+
+    Ok(map)
+}
+
+/// Expands an `DetailedConfigurationEntry` into a TOML value.
+///
+/// If the `env` field is `None`, the `default` field is returned.
+fn expand_env_var(entry: DetailedConfigurationEntry) -> KonfigurationResult<TomlValue> {
+    let DetailedConfigurationEntry { env, default } = entry;
+
+    let Some(env) = env else {
+        return Ok(default);
+    };
+
+    let Some(override_value) = std::env::var(env).ok() else {
+        return Ok(default)
+    };
+
+    // Ugly stuff to make sure we can parse the value into the correct type.
+    match default {
+        TomlValue::String(_) => to_toml_string(&override_value),
+        TomlValue::Integer(_) => to_toml_integer(&override_value),
+        TomlValue::Float(_) => to_toml_float(&override_value),
+        TomlValue::Boolean(_) => to_toml_boolean(&override_value),
+        TomlValue::Datetime(_) => to_toml_date_time(&override_value),
+        TomlValue::Array(_) => to_toml_array(&override_value),
+        TomlValue::Table(_) => {
+            unreachable!("this should be handled by the table stuff, how did it get here?");
+        }
+    }
+}
+
+/// Converts a string into a TOML array.
+fn to_toml_array(value: &str) -> KonfigurationResult<TomlValue> {
+    Ok(TomlValue::deserialize(ValueDeserializer::new(value))?)
+}
+
+/// Converts a string into a TOML boolean.
+fn to_toml_boolean(value: &str) -> KonfigurationResult<TomlValue> {
+    value
+        .parse()
+        .map(TomlValue::Boolean)
+        .map_err(|e| Error::Entry(e.to_string()))
+}
+
+/// Converts a string into a TOML date time.
+fn to_toml_date_time(value: &str) -> KonfigurationResult<TomlValue> {
+    value
+        .parse()
+        .map(TomlValue::Datetime)
+        .map_err(|e| Error::Entry(e.to_string()))
+}
+
+/// Converts a string into a TOML string.
+fn to_toml_string(value: &str) -> KonfigurationResult<TomlValue> {
+    Ok(TomlValue::String(value.to_string()))
+}
+
+/// Converts a string into a TOML integer.
+fn to_toml_integer(value: &str) -> KonfigurationResult<TomlValue> {
+    value
+        .parse()
+        .map(TomlValue::Integer)
+        .map_err(|e| Error::Entry(e.to_string()))
+}
+
+/// Converts a string into a TOML float.
+fn to_toml_float(value: &str) -> KonfigurationResult<TomlValue> {
+    value
+        .parse()
+        .map(TomlValue::Float)
+        .map_err(|e| Error::Entry(e.to_string()))
 }
 
 #[cfg(test)]
 mod tests {
+    use serde::Deserialize;
+
     use super::*;
 
     #[derive(Debug, Deserialize)]
@@ -199,18 +158,10 @@ mod tests {
         pub rust_log: String,
         pub cors_origin: String,
         pub server_port: u16,
+        pub exponential_backoff: Vec<u16>,
         pub mail: MailConfig,
-        pub google: GoogleConfig,
-        pub security: SecurityConfig,
         pub postgres: PostgresConfig,
         pub redis: RedisConfig,
-        pub meilisearch: MeilisearchConfig,
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct MeilisearchConfig {
-        pub url: String,
-        pub key: String,
     }
 
     #[derive(Debug, Deserialize)]
@@ -227,22 +178,12 @@ mod tests {
         pub username: String,
         pub password: String,
         pub database: String,
+        pub port: u16,
         pub min_connections: u32,
         pub max_connections: u32,
         pub connection_acquire_timeout_secs: u64,
         pub enable_migration: bool,
         pub migrations_dir: String,
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct SecurityConfig {
-        pub password_salt: String,
-        pub jwt_secret: String,
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct GoogleConfig {
-        pub audience: String,
     }
 
     #[derive(Debug, Deserialize)]
@@ -260,11 +201,23 @@ mod tests {
     }
 
     #[test]
-    fn it_works() {
+    fn can_parse_configs() {
+        std::env::set_var("EXPONENTIAL_BACKOFF", "[3, 4, 5]");
         std::env::set_var("PROFILE", "prod");
+        std::env::set_var("SMTP_PASSWORD", "password");
+        std::env::set_var("DATABASE_PORT", "1111");
 
-        let t = Konfiguration::from_file("test_files/configs.toml").parse::<Config>();
+        let config = Konfiguration::from_file("test_files/config.toml")
+            .parse::<Config>()
+            .unwrap();
 
-        println!("{t:?}");
+        assert_eq!(config.profile, "prod");
+        assert_eq!(config.rust_log, "info");
+        assert_eq!(config.cors_origin, "*");
+        assert_eq!(config.server_port, 8080);
+        assert_eq!(config.exponential_backoff, vec![3, 4, 5]);
+        assert_eq!(config.mail.templates_dir, "templates/**/*.html");
+        assert_eq!(config.postgres.port, 1111);
+        assert_eq!(config.mail.smtp.password, "password");
     }
 }

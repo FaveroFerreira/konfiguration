@@ -3,6 +3,7 @@ rust_log = "info"
 a-number = 123
 server_port = { env = "PORT", default = 8080 }
 cors_origin = { env = "CORS_ALLOWED_ORIGINS", default = "*" }
+exponential_backoff = { env = "EXPONENTIAL_BACKOFF", default = [1, 2, 3] }
 
 [postgres]
 username = { env = "DATABASE_USERNAME", default = "root" }
@@ -23,22 +24,11 @@ max_connections = { env = "REDIS_MAX_CONNECTIONS", default = 10 }
 connection_acquire_timeout_secs = { env = "REDIS_CONNECTION_ACQUIRE_TIMEOUT_SECONDS", default = 10 }
 
 [mail]
-from = { env = "MAIL_FROM", default = "Garagista <contato@garagista.com.br>" }
+from = { env = "MAIL_FROM", default = "Me <contacto@me.com>" }
 templates_dir = { env = "MAIL_TEMPLATES_DIR", default = "templates/**/*.html" }
 
 [mail.smtp]
-host = "oo"
-username = "asdasd"
-password = "asdasd"
-
-[google]
-audience = { env = "GOOGLE_AUDIENCE", default = "1042343256503-dm0hapguf6vrb93v252k3bn9daru3g3d.apps.googleusercontent.com" }
-
-[security]
-password_salt = { env = "PASSWORD_SALT", default = "super-secret-salt" }
-jwt_secret = { env = "JWT_SECRET", default = "super-secret-jwt-salt" }
-
-[meilisearch]
-url = { env = "MEILISEARCH_URL", default = "http://localhost:7700" }
-key = { env = "MEILISEARCH_KEY", default = "root" }
+host = "http://smtp.com"
+username = "smtp_username"
+password = { env = "SMTP_PASSWORD", default = "default_password" }
 

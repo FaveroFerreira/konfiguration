@@ -1,8 +1,8 @@
 [package]
 name = "konfiguration"
-version = "0.2.2"
+version = "1.0.0"
 rust-version = "1.60"
-description = "Json configuration for Rust applications"
+description = "Toml configuration loader with environment variables support."
 documentation = "https://docs.rs/konfiguration/"
 homepage = "https://github.com/faveroferreira/konfiguration"
 repository = "https://github.com/faveroferreira/konfiguration"
@@ -17,10 +17,11 @@ edition = "2021"
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
+serde = "1.0"
 serde-untagged = "0.1.1"
 toml = "0.8.0"
-anyhow = "1.0.75"
+thiserror = "1.0"
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
+
