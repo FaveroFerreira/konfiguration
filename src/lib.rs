@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use serde::de::DeserializeOwned;
 use serde::{de, Deserialize, Serialize};
 use serde_untagged::UntaggedEnumVisitor;
 use toml::Value;
@@ -75,6 +76,13 @@ impl<'de> de::Deserialize<'de> for ConfigurationEntry {
                     value.to_string(),
                 )))
             })
+            .seq(|seq| {
+                let array: Value = seq.deserialize().unwrap();
+
+
+
+                Ok(ConfigurationEntry::Simple(Value::Array(array.as_array().unwrap().to_owned())))
+            })
             .map(|value| {
                 let map: Value = value.deserialize()?;
                 let mut map = map.as_table().unwrap().clone();
@@ -107,7 +115,7 @@ impl Konfiguration {
         }
     }
 
-    pub fn parse(self) -> anyhow::Result<()> {
+    pub fn parse<T: DeserializeOwned>(self) -> anyhow::Result<T> {
         let path = Path::new(&self.file_path);
 
         let string = std::fs::read_to_string(path)?;
@@ -118,9 +126,9 @@ impl Konfiguration {
 
         expand_env_vars(&mut config, manifest);
 
-        println!("{config:#?}");
+        let t = T::deserialize(config).unwrap();
 
-        Ok(())
+        Ok(t)
     }
 }
 
@@ -151,7 +159,15 @@ fn expand_env_vars(configs: &mut toml::map::Map<String, Value>, manifest: Config
                                 configs.insert(name, Value::Datetime(var.parse().unwrap()))
                             }
                             Value::Array(_) => {
-                                continue;
+                                let values = var.split(',').collect::<Vec<_>>();
+
+                                let mut arr = Vec::new();
+
+                                for val in values {
+                                    arr.push(toml::from_str(val).unwrap());
+                                }
+
+                                configs.insert(name, Value::Array(arr))
                             }
                             Value::Table(_) => unreachable!(
                                 "this should be handled by the table stuff, how did it get here?"
@@ -177,8 +193,78 @@ fn expand_env_vars(configs: &mut toml::map::Map<String, Value>, manifest: Config
 mod tests {
     use super::*;
 
+    #[derive(Debug, Deserialize)]
+    pub struct Config {
+        pub profile: String,
+        pub rust_log: String,
+        pub cors_origin: String,
+        pub server_port: u16,
+        pub mail: MailConfig,
+        pub google: GoogleConfig,
+        pub security: SecurityConfig,
+        pub postgres: PostgresConfig,
+        pub redis: RedisConfig,
+        pub meilisearch: MeilisearchConfig,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct MeilisearchConfig {
+        pub url: String,
+        pub key: String,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct RedisConfig {
+        pub url: String,
+        pub max_connections: u32,
+        pub min_connections: u32,
+        pub connection_acquire_timeout_secs: u64,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct PostgresConfig {
+        pub host: String,
+        pub username: String,
+        pub password: String,
+        pub database: String,
+        pub min_connections: u32,
+        pub max_connections: u32,
+        pub connection_acquire_timeout_secs: u64,
+        pub enable_migration: bool,
+        pub migrations_dir: String,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct SecurityConfig {
+        pub password_salt: String,
+        pub jwt_secret: String,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct GoogleConfig {
+        pub audience: String,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct MailConfig {
+        pub from: String,
+        pub templates_dir: String,
+        pub smtp: SmtpConfig,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct SmtpConfig {
+        pub host: String,
+        pub username: String,
+        pub password: String,
+    }
+
     #[test]
     fn it_works() {
-        let _ = Konfiguration::from_file("test_files/configs.toml").parse();
+        std::env::set_var("PROFILE", "prod");
+
+        let t = Konfiguration::from_file("test_files/configs.toml").parse::<Config>();
+
+        println!("{t:?}");
     }
 }

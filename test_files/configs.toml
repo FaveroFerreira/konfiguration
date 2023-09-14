@@ -1,38 +1,42 @@
 profile = { env = "PROFILE", default = "local" }
-rust-log = "info"
+rust_log = "info"
 a-number = 123
+server_port = { env = "PORT", default = 8080 }
+cors_origin = { env = "CORS_ALLOWED_ORIGINS", default = "*" }
 
-[server]
-port = { env = "PORT", default = 8080 }
-cors-allowed-origins = { env = "CORS_ALLOWED_ORIGINS", default = "*" }
-
-[database]
+[postgres]
 username = { env = "DATABASE_USERNAME", default = "root" }
 password = { env = "DATABASE_PASSWORD", default = "root" }
 host = { env = "DATABASE_HOST", default = "localhost" }
 port = { env = "DATABASE_PORT", default = 5432 }
-name = { env = "DATABASE_NAME", default = "postgres" }
-min-connections = { env = "DATABASE_MIN_CONNECTIONS", default = 3 }
-max-connections = { env = "DATABASE_MAX_CONNECTIONS", default = 10 }
-connection-acquire-timeout-secs = { env = "DATABASE_CONNECTION_ACQUIRE_TIMEOUT_SECONDS", default = 10 }
-enable-migrations = { env = "DATABASE_ENABLE_MIGRATIONS", default = false }
+database = { env = "DATABASE_NAME", default = "postgres" }
+min_connections = { env = "DATABASE_MIN_CONNECTIONS", default = 3 }
+max_connections = { env = "DATABASE_MAX_CONNECTIONS", default = 10 }
+connection_acquire_timeout_secs = { env = "DATABASE_CONNECTION_ACQUIRE_TIMEOUT_SECONDS", default = 10 }
+enable_migration = { env = "DATABASE_ENABLE_MIGRATIONS", default = false }
+migrations_dir = "./migrations"
 
 [redis]
 url = { env = "REDIS_URL", default = "redis://localhost:6379" }
-min-connections = { env = "REDIS_MIN_CONNECTIONS", default = 3 }
-max-connections = { env = "REDIS_MAX_CONNECTIONS", default = 10 }
-connection-acquire-timeout-secs = { env = "REDIS_CONNECTION_ACQUIRE_TIMEOUT_SECONDS", default = 10 }
+min_connections = { env = "REDIS_MIN_CONNECTIONS", default = 3 }
+max_connections = { env = "REDIS_MAX_CONNECTIONS", default = 10 }
+connection_acquire_timeout_secs = { env = "REDIS_CONNECTION_ACQUIRE_TIMEOUT_SECONDS", default = 10 }
 
 [mail]
 from = { env = "MAIL_FROM", default = "Garagista <contato@garagista.com.br>" }
-templates-dir = { env = "MAIL_TEMPLATES_DIR", default = "templates/**/*.html" }
+templates_dir = { env = "MAIL_TEMPLATES_DIR", default = "templates/**/*.html" }
+
+[mail.smtp]
+host = "oo"
+username = "asdasd"
+password = "asdasd"
 
 [google]
 audience = { env = "GOOGLE_AUDIENCE", default = "1042343256503-dm0hapguf6vrb93v252k3bn9daru3g3d.apps.googleusercontent.com" }
 
 [security]
-password-salt = { env = "PASSWORD_SALT", default = "super-secret-salt" }
-jwt-secret = { env = "JWT_SECRET", default = "super-secret-jwt-salt" }
+password_salt = { env = "PASSWORD_SALT", default = "super-secret-salt" }
+jwt_secret = { env = "JWT_SECRET", default = "super-secret-jwt-salt" }
 
 [meilisearch]
 url = { env = "MEILISEARCH_URL", default = "http://localhost:7700" }
