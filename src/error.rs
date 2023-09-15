@@ -1,22 +1,13 @@
-pub type KonfigurationResult<T> = Result<T, Error>;
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Configuration file at {path}")]
-    FileNotFound { path: String },
+    #[error("failed to load configuration file: {0}")]
+    Io(#[from] std::io::Error),
 
-    #[error("Error trying to read data from file: {0}")]
-    FileSystem(#[from] std::io::Error),
+    #[error("failed to parse configuration file: {0}")]
+    Toml(#[from] toml::de::Error),
 
-    #[error("Unsupported configuration file format: {format}")]
-    UnsupportedFormat { format: String },
-
-    #[error("Environment value {env} is not present and no default value was provided")]
-    DefaultMissing { env: String },
-
-    #[error("Error parsing configuration file: {0}")]
-    JsonParse(#[from] serde_json::Error),
-
-    #[error("Error parsing configuration file: {0}")]
-    YamlParse(#[from] serde_yaml::Error),
+    #[error("failed to parse configuration entry: {0}")]
+    Entry(String),
 }
+
+pub type KonfigurationResult<T> = Result<T, Error>;

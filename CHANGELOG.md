@@ -5,25 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# Unreleased
+# 1.0.0
 
-- Feature flags for configuration file types.
-
-# 0.2.2 (17. July, 2023)
-
-- Fixes Konfiguration version in README.md.
-- Adds Konfiguration docs to Cargo.toml.
-
-# 0.2.1 (17. July, 2023)
-
-- Fixes bug that prevents the use of files with the yml extension.
-
-# 0.2.0 (17. July, 2023)
-
-- Feature support for Yaml configuration files
-- Fix changelog usage example.
-
-
-# 0.1.0 (16. July, 2023)
-
-- Initial release.
+- Stable release
