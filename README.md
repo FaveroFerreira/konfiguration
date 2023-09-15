@@ -13,7 +13,7 @@ Add Konfiguration to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-konfiguration = "1.0.0"
+konfiguration = "1.0.1"
 serde = { version = "1.0", features = ["derive"] }
 ```
 
