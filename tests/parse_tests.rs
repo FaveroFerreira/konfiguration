@@ -53,7 +53,7 @@ pub struct SmtpConfig {
 #[test]
 fn can_parse_configs() {
     std::env::set_var("EXPONENTIAL_BACKOFF", "[3,4,5]");
-    std::env::set_var("PROFILE", "prodaaaaa");
+    std::env::set_var("PROFILE", "prod");
     std::env::set_var("SMTP_PASSWORD", "password");
     std::env::set_var("DATABASE_PORT", "1111");
 

@@ -1,13 +1,10 @@
 use std::fs;
 
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use toml::de::ValueDeserializer;
 
-use crate::de::ManifestDeserializer;
-use crate::error::{KonfigurationError, KonfigurationResult};
-use crate::value::{
-    ConfigurationEntry, ConfigurationManifest, DetailedConfigurationEntry, TomlMap, TomlValue,
-};
+use crate::error::KonfigurationResult;
+use crate::value::{ConfigurationEntry, ConfigurationManifest, TomlMap, TomlValue};
 
 mod de;
 pub mod error;
@@ -50,10 +47,9 @@ impl Konfiguration {
     pub fn parse<T: serde::de::DeserializeOwned>(self) -> KonfigurationResult<T> {
         let text = fs::read_to_string(self.file_path)?;
         let manifest = toml::from_str::<ConfigurationManifest>(&text)?;
-        println!("simplifying");
-        // let simple_toml = simplify(manifest)?;
+        let simple_toml = simplify(manifest)?;
 
-        Ok(T::deserialize(ManifestDeserializer::new(manifest))?)
+        Ok(T::deserialize(simple_toml)?)
     }
 }
 
@@ -64,7 +60,11 @@ fn simplify(manifest: ConfigurationManifest) -> KonfigurationResult<TomlMap> {
     for (key, config_entry) in manifest {
         let value = match config_entry {
             ConfigurationEntry::Simple(value) => value,
-            ConfigurationEntry::Detailed(detailed) => expand_env_var(detailed)?,
+            ConfigurationEntry::Env { env_val } => {
+                env_sanity_check(&env_val);
+                expand_with_retry(env_val)?
+            }
+            ConfigurationEntry::Unset => continue,
             ConfigurationEntry::Table(table) => {
                 let simplified = simplify(table)?;
 
@@ -78,24 +78,18 @@ fn simplify(manifest: ConfigurationManifest) -> KonfigurationResult<TomlMap> {
     Ok(map)
 }
 
-/// Expands an `DetailedConfigurationEntry` into a TOML value.
+fn env_sanity_check(env: &str) {
+    if env.is_empty() {
+        panic!("env cannot be empty");
+    }
+}
+
+/// Expands an env var value into into a TOML value.
 ///
-/// If the `env` field is `None`, the `default` field is returned.
-fn expand_env_var(entry: DetailedConfigurationEntry) -> KonfigurationResult<TomlValue> {
-    let DetailedConfigurationEntry { env, default } = entry;
-
-    let Some(override_value) = std::env::var(&env).ok() else {
-        return match default {
-            None => Err(KonfigurationError::Entry(format!("{} is not set", env))),
-            Some(default) => Ok(default),
-        }
-    };
-
-    println!("override_value: {}", override_value);
-
-    match ConfigurationEntry::deserialize(ValueDeserializer::new(&override_value))? {
-        ConfigurationEntry::Simple(inner) => Ok(inner),
-        ConfigurationEntry::Detailed(_) => unreachable!(),
-        ConfigurationEntry::Table(_) => unreachable!(),
+/// This is ugly because toml sometimes fails to deserialize a simple string
+fn expand_with_retry(value: String) -> KonfigurationResult<TomlValue> {
+    match TomlValue::deserialize(ValueDeserializer::new(&value)) {
+        Ok(v) => Ok(v),
+        Err(_) => Ok(TomlValue::String(value)),
     }
 }
