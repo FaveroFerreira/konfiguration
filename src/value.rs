@@ -14,6 +14,6 @@ pub enum ConfigurationEntry {
 
 #[derive(Debug)]
 pub struct DetailedConfigurationEntry {
-    pub env: Option<String>,
-    pub default: TomlValue,
+    pub env: String,
+    pub default: Option<TomlValue>,
 }
