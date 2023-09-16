@@ -40,8 +40,21 @@ pub struct ConfigFileRepresentation {
     hash_with_no_default_env_unset: Option<HashMap<String, i32>>,
     hash_with_no_default_env_set: Option<HashMap<String, i32>>,
 
+    list: Vec<List>,
+
     nested: Nested,
     nested_do_not_exist: Option<Nested>,
+}
+
+#[derive(Debug, serde::Deserialize, PartialEq)]
+pub struct List {
+    s: Option<String>,
+    s_with_no_default: Option<String>,
+    i: i32,
+    f: f32,
+    b: bool,
+    array: Vec<i32>,
+    hash: HashMap<String, i32>,
 }
 
 #[derive(Debug, serde::Deserialize, PartialEq)]

@@ -72,12 +72,52 @@ fn simplify(manifest: ConfigurationManifest) -> KonfigurationResult<TomlMap> {
 
                 TomlValue::Table(simplified)
             }
+            ConfigurationEntry::Vec(entries) => {
+                let mut vec = Vec::new();
+
+                simplify_entry(entries, &mut vec)?;
+
+                TomlValue::Array(vec)
+            }
         };
 
         map.insert(key, value);
     }
 
     Ok(map)
+}
+
+fn simplify_entry(
+    entries: Vec<ConfigurationEntry>,
+    vec: &mut Vec<TomlValue>,
+) -> KonfigurationResult<()> {
+    println!("array");
+    println!("{:#?}", entries);
+    println!("");
+
+    for entry in entries {
+        match entry {
+            ConfigurationEntry::Simple(value) => vec.push(value),
+            ConfigurationEntry::Env(env_value) => {
+                env_sanity_check(&env_value);
+                vec.push(expand_with_retry(env_value)?);
+            }
+            ConfigurationEntry::UnsetEnv => continue,
+            ConfigurationEntry::Table(table) => {
+                let simplified = simplify(table)?;
+
+                vec.push(TomlValue::Table(simplified));
+            }
+            ConfigurationEntry::Vec(entries) => {
+                let mut vec = Vec::new();
+
+                simplify_entry(entries, &mut vec)?;
+
+                TomlValue::Array(vec);
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Not much to do here at this point, but we might want to add more checks in the future.
