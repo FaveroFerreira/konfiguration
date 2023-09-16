@@ -1,9 +1,8 @@
 use std::fs;
 
-use serde::{Deserialize, Deserializer};
-use toml::de::ValueDeserializer;
+use serde::de::IntoDeserializer;
+use serde::Deserialize;
 
-use crate::de::ManifestDeserializer;
 use crate::error::{KonfigurationError, KonfigurationResult};
 use crate::value::{
     ConfigurationEntry, ConfigurationManifest, DetailedConfigurationEntry, TomlMap, TomlValue,
@@ -51,9 +50,9 @@ impl Konfiguration {
         let text = fs::read_to_string(self.file_path)?;
         let manifest = toml::from_str::<ConfigurationManifest>(&text)?;
         println!("simplifying");
-        // let simple_toml = simplify(manifest)?;
+        let simple_toml = simplify(manifest)?;
 
-        Ok(T::deserialize(ManifestDeserializer::new(manifest))?)
+        Ok(T::deserialize(simple_toml.into_deserializer())?)
     }
 }
 
@@ -91,11 +90,11 @@ fn expand_env_var(entry: DetailedConfigurationEntry) -> KonfigurationResult<Toml
         }
     };
 
-    println!("override_value: {}", override_value);
+    let de = toml::de::ValueDeserializer::new(&override_value);
 
-    match ConfigurationEntry::deserialize(ValueDeserializer::new(&override_value))? {
-        ConfigurationEntry::Simple(inner) => Ok(inner),
-        ConfigurationEntry::Detailed(_) => unreachable!(),
-        ConfigurationEntry::Table(_) => unreachable!(),
+    // Ugly hack to fix a bug in toml-rs where it doesn't deserialize a string if it's not surrounded by quotes.
+    match TomlValue::deserialize(de) {
+        Ok(value) => Ok(value),
+        Err(_) => Ok(TomlValue::String(override_value)),
     }
 }

@@ -53,9 +53,10 @@ pub struct SmtpConfig {
 #[test]
 fn can_parse_configs() {
     std::env::set_var("EXPONENTIAL_BACKOFF", "[3,4,5]");
-    std::env::set_var("PROFILE", "prodaaaaa");
+    std::env::set_var("PROFILE", "prod");
     std::env::set_var("SMTP_PASSWORD", "password");
     std::env::set_var("DATABASE_PORT", "1111");
+    std::env::set_var("DATABASE_USERNAME", "username");
 
     let config = Konfiguration::from_file("test_files/config.toml")
         .parse::<Config>()
@@ -68,5 +69,8 @@ fn can_parse_configs() {
     assert_eq!(config.exponential_backoff, vec![3, 4, 5]);
     assert_eq!(config.mail.templates_dir, "templates/**/*.html");
     assert_eq!(config.postgres.port, 1111);
+    assert_eq!(config.postgres.username, "username");
     assert_eq!(config.mail.smtp.password, "password");
 }
+
+fn fails_to_parse_configs_if_env_is_not_set_and_default_does_not_exists() {}
