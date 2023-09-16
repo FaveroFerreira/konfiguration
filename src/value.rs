@@ -12,9 +12,3 @@ pub enum ConfigurationEntry {
     UnsetEnv,
     Table(HashMap<String, ConfigurationEntry>),
 }
-
-#[derive(Debug)]
-pub struct DetailedConfigurationEntry {
-    pub env_val: String,
-    pub default: Option<TomlValue>,
-}
