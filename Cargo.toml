@@ -1,6 +1,6 @@
 [package]
 name = "konfiguration"
-version = "1.0.1"
+version = "1.1.0"
 rust-version = "1.66.1"
 description = "Toml configuration loader with environment variables support."
 documentation = "https://docs.rs/konfiguration/"
@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = ["config", "configuration", "settings", "env", "environment"]
 authors = ["Guilherme Favero Ferreira <guifaveroferreira@gmail.com>"]
 categories = ["config"]
-license = "MIT/Apache-2.0"
+license = "MIT"
 edition = "2021"
 
 [badges]
@@ -19,7 +19,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 serde = "1.0"
 serde-untagged = "0.1.1"
-toml = { version = "0.8.0", features = ["preserve_order"] }
+toml = "0.8.0"
 thiserror = "1.0"
 
 [dev-dependencies]

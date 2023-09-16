@@ -14,7 +14,7 @@ mod value;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```no_run
 /// use konfiguration::Konfiguration;
 ///
 /// #[derive(Debug, serde::Deserialize)]
@@ -38,12 +38,14 @@ pub struct Konfiguration {
 }
 
 impl Konfiguration {
+    /// Creates a new configuration loader with the given file path.
     pub fn from_file(path: impl Into<String>) -> Self {
         Konfiguration {
             file_path: path.into(),
         }
     }
 
+    /// Parses the configuration file into the given type.
     pub fn parse<T: serde::de::DeserializeOwned>(self) -> KonfigurationResult<T> {
         let text = fs::read_to_string(self.file_path)?;
         let manifest = toml::from_str::<ConfigurationManifest>(&text)?;
@@ -60,11 +62,11 @@ fn simplify(manifest: ConfigurationManifest) -> KonfigurationResult<TomlMap> {
     for (key, config_entry) in manifest {
         let value = match config_entry {
             ConfigurationEntry::Simple(value) => value,
-            ConfigurationEntry::Env { env_val } => {
-                env_sanity_check(&env_val);
-                expand_with_retry(env_val)?
+            ConfigurationEntry::Env(env_value) => {
+                env_sanity_check(&env_value);
+                expand_with_retry(env_value)?
             }
-            ConfigurationEntry::Unset => continue,
+            ConfigurationEntry::UnsetEnv => continue,
             ConfigurationEntry::Table(table) => {
                 let simplified = simplify(table)?;
 
@@ -78,6 +80,7 @@ fn simplify(manifest: ConfigurationManifest) -> KonfigurationResult<TomlMap> {
     Ok(map)
 }
 
+/// Not much to do here at this point, but we might want to add more checks in the future.
 fn env_sanity_check(env: &str) {
     if env.is_empty() {
         panic!("env cannot be empty");
@@ -87,6 +90,7 @@ fn env_sanity_check(env: &str) {
 /// Expands an env var value into into a TOML value.
 ///
 /// This is ugly because toml sometimes fails to deserialize a simple string
+/// I will be looking into this later.
 fn expand_with_retry(value: String) -> KonfigurationResult<TomlValue> {
     match TomlValue::deserialize(ValueDeserializer::new(&value)) {
         Ok(v) => Ok(v),

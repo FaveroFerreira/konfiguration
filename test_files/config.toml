@@ -1,34 +1,43 @@
-profile = { env = "PROFILE", default = "local" }
-rust_log = "info"
-a-number = 123
-server_port = { env = "PORT", default = 8080 }
-cors_origin = { env = "CORS_ALLOWED_ORIGINS", default = "*" }
-exponential_backoff = { env = "EXPONENTIAL_BACKOFF", default = [1, 2, 3] }
+s = "im a string"
+s_with_no_default = { env = "S_WITH_NO_DEFAULT" }
+s_with_default = { env = "S_WITH_DEFAULT", default = "default_value" }
+s_with_no_default_env_unset = { env = "S_WITH_NO_DEFAULT_ENV_UNSET" }
+s_with_no_default_env_set = { env = "S_WITH_NO_DEFAULT_ENV_SET" }
 
-[postgres]
-username = { env = "DATABASE_USERNAME", default = "root" }
-password = { env = "DATABASE_PASSWORD", default = "root" }
-host = { env = "DATABASE_HOST", default = "localhost" }
-port = { env = "DATABASE_PORT", default = 5432 }
-database = { env = "DATABASE_NAME", default = "postgres" }
-min_connections = { env = "DATABASE_MIN_CONNECTIONS", default = 3 }
-max_connections = { env = "DATABASE_MAX_CONNECTIONS", default = 10 }
-connection_acquire_timeout_secs = { env = "DATABASE_CONNECTION_ACQUIRE_TIMEOUT_SECONDS", default = 10 }
-enable_migration = { env = "DATABASE_ENABLE_MIGRATIONS", default = false }
-migrations_dir = "./migrations"
+i = 42
+i_with_no_default = { env = "I_WITH_NO_DEFAULT" }
+i_with_default = { env = "I_WITH_DEFAULT", default = 2 }
+i_with_default_env_unset = { env = "I_WITH_DEFAULT_ENV_UNSET", default = 2 }
+i_with_no_default_env_set = { env = "I_WITH_NO_DEFAULT_ENV_SET" }
 
-[redis]
-url = { env = "REDIS_URL", default = "redis://localhost:6379" }
-min_connections = { env = "REDIS_MIN_CONNECTIONS", default = 3 }
-max_connections = { env = "REDIS_MAX_CONNECTIONS", default = 10 }
-connection_acquire_timeout_secs = { env = "REDIS_CONNECTION_ACQUIRE_TIMEOUT_SECONDS", default = 10 }
+f = 42.42
+f_with_no_default = { env = "F_WITH_NO_DEFAULT" }
+f_with_default = { env = "F_WITH_DEFAULT", default = 2.2 }
+f_with_default_env_unset = { env = "F_WITH_DEFAULT_ENV_UNSET", default = 2.2 }
+f_with_no_default_env_set = { env = "F_WITH_NO_DEFAULT_ENV_SET" }
 
-[mail]
-from = { env = "MAIL_FROM", default = "Me <contacto@me.com>" }
-templates_dir = { env = "MAIL_TEMPLATES_DIR", default = "templates/**/*.html" }
+b = true
+b_with_no_default = { env = "B_WITH_NO_DEFAULT" }
+b_with_default = { env = "B_WITH_DEFAULT", default = false }
+b_with_default_env_unset = { env = "B_WITH_DEFAULT_ENV_UNSET", default = false }
+b_with_no_default_env_set = { env = "B_WITH_NO_DEFAULT_ENV_SET" }
 
-[mail.smtp]
-host = "http://smtp.com"
-username = "smtp_username"
-password = { env = "SMTP_PASSWORD", default = "default_password" }
+array = [1, 2, 3]
+array_with_no_default = { env = "ARRAY_WITH_NO_DEFAULT" }
+array_with_default = { env = "ARRAY_WITH_DEFAULT", default = [4, 5, 6] }
+array_with_no_default_env_unset = { env = "ARRAY_WITH_NO_DEFAULT_ENV_UNSET" }
+array_with_no_default_env_set = { env = "ARRAY_WITH_NO_DEFAULT_ENV_SET" }
 
+hash = { a = 1, b = 2, c = 3 }
+hash_with_no_default = { env = "HASH_WITH_NO_DEFAULT" }
+hash_with_default = { env = "HASH_WITH_DEFAULT", default = { d = 4, e = 5, f = 6 } }
+hash_with_no_default_env_unset = { env = "HASH_WITH_NO_DEFAULT_ENV_UNSET" }
+hash_with_no_default_env_set = { env = "HASH_WITH_NO_DEFAULT_ENV_SET" }
+
+[nested]
+s = "im a nested string"
+i = 42
+f = 42.42
+b = true
+array = [1, 2, 3]
+hash = { a = 1, b = 2, c = 3 }

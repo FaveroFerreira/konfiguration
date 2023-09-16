@@ -71,7 +71,7 @@ pub struct PostgresConfig {
 }
 
 fn main() {
-    let config = Konfiguration::from_file("filepath/config.json")
+    let config = Konfiguration::from_file("filepath/config.toml")
         .parse::<Config>()
         .unwrap();
     

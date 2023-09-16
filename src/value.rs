@@ -8,8 +8,8 @@ pub type ConfigurationManifest = HashMap<String, ConfigurationEntry>;
 #[derive(Debug)]
 pub enum ConfigurationEntry {
     Simple(TomlValue),
-    Env { env_val: String },
-    Unset,
+    Env(String),
+    UnsetEnv,
     Table(HashMap<String, ConfigurationEntry>),
 }
 
