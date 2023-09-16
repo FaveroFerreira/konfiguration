@@ -1,12 +1,9 @@
-use std::collections::HashMap;
-use std::fmt::Display;
-
 use crate::error::KonfigurationError;
+use crate::map::Map;
 
 pub type TomlValue = toml::Value;
-pub type TomlMap = toml::map::Map<String, TomlValue>;
 
-pub type ConfigurationManifest = HashMap<String, ConfigurationEntry>;
+pub type ConfigurationManifest = Map<String, ConfigurationEntry>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConfigurationEntry {
@@ -29,7 +26,7 @@ pub enum ConfigurationEntry {
     Detailed(Box<DetailedConfigurationEntry>),
 
     /// Represents a TOML table that is not in the above format.
-    Table(HashMap<String, ConfigurationEntry>),
+    Table(Map<String, ConfigurationEntry>),
 }
 
 /// Represents a TOML table in the following format:
@@ -145,7 +142,7 @@ impl ConfigurationEntry {
     }
 
     /// Extracts the table value if it is a table.
-    pub fn as_table(&self) -> Option<&HashMap<String, ConfigurationEntry>> {
+    pub fn as_table(&self) -> Option<&Map<String, ConfigurationEntry>> {
         match *self {
             ConfigurationEntry::Table(ref s) => Some(s),
             _ => None,
@@ -153,7 +150,7 @@ impl ConfigurationEntry {
     }
 
     /// Extracts the table value if it is a table.
-    pub fn as_table_mut(&mut self) -> Option<&mut HashMap<String, ConfigurationEntry>> {
+    pub fn as_table_mut(&mut self) -> Option<&mut Map<String, ConfigurationEntry>> {
         match *self {
             ConfigurationEntry::Table(ref mut s) => Some(s),
             _ => None,
@@ -207,7 +204,7 @@ impl TryFrom<TomlValue> for ConfigurationEntry {
                         let entry = ConfigurationEntry::try_from(value).unwrap();
                         (key, entry)
                     })
-                    .collect::<HashMap<_, _>>();
+                    .collect::<Map<_, _>>();
 
                 Ok(ConfigurationEntry::Table(table))
             }

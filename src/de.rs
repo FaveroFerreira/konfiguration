@@ -7,7 +7,8 @@ use crate::value::{ConfigurationEntry, DetailedConfigurationEntry, TomlValue};
 
 /// Custom Deserializer for ConfigurationEntry.
 /// Enables deserialization of any type that derives Deserialize.
-impl<'de> de::Deserializer<'de> for ConfigurationEntry {
+#[allow(unused)]
+impl<'de> de::Deserializer<'de> for crate::map::Map<String, ConfigurationEntry> {
     type Error = serde_untagged::de::Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>

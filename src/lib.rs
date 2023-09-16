@@ -5,6 +5,7 @@ use crate::value::ConfigurationManifest;
 
 mod de;
 pub mod error;
+mod map;
 mod value;
 
 /// A configuration loader.
@@ -46,7 +47,7 @@ impl Konfiguration {
         let manifest = toml::from_str::<ConfigurationManifest>(&text)?;
         // let simple_toml = simplify(manifest)?;
 
-        println!("{:?}", manifest);
+        let t = T::deserialize(manifest).unwrap();
 
         Err(KonfigurationError::Entry("".to_string()))
     }
