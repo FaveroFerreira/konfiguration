@@ -8,12 +8,13 @@ pub type ConfigurationManifest = HashMap<String, ConfigurationEntry>;
 #[derive(Debug)]
 pub enum ConfigurationEntry {
     Simple(TomlValue),
-    Detailed(DetailedConfigurationEntry),
+    Env(String),
+    UnsetEnv,
     Table(HashMap<String, ConfigurationEntry>),
 }
 
 #[derive(Debug)]
 pub struct DetailedConfigurationEntry {
-    pub env: Option<String>,
-    pub default: TomlValue,
+    pub env_val: String,
+    pub default: Option<TomlValue>,
 }

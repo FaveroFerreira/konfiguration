@@ -2,9 +2,9 @@ use serde::de;
 use serde_untagged::de::{Map, Seq};
 use serde_untagged::UntaggedEnumVisitor;
 
-use crate::value::{ConfigurationEntry, DetailedConfigurationEntry, TomlValue};
+use crate::value::{ConfigurationEntry, TomlValue};
 
-/// Enables deserialization of a configuration entry.
+/// Enables deserialization of a configuration entry from a Toml file.
 ///
 /// We need a custom implementation because we want to support both simple and
 /// detailed configuration entries. A simple configuration entry is just a
@@ -29,6 +29,7 @@ impl<'de> de::Deserialize<'de> for ConfigurationEntry {
             .u32(ConfigurationEntry::try_from)
             .f32(ConfigurationEntry::try_from)
             .f64(ConfigurationEntry::try_from)
+            .bool(ConfigurationEntry::try_from)
             .string(|s| {
                 ConfigurationEntry::try_from(s)
             })
@@ -39,6 +40,14 @@ impl<'de> de::Deserialize<'de> for ConfigurationEntry {
                 ConfigurationEntry::try_from(map)
             })
             .deserialize(deserializer)
+    }
+}
+
+impl TryFrom<bool> for ConfigurationEntry {
+    type Error = serde_untagged::de::Error;
+
+    fn try_from(value: bool) -> Result<Self, Self::Error> {
+        Ok(ConfigurationEntry::Simple(TomlValue::Boolean(value)))
     }
 }
 
@@ -140,11 +149,19 @@ impl TryFrom<Map<'_, '_>> for ConfigurationEntry {
     fn try_from(value: Map) -> Result<Self, Self::Error> {
         let toml_map: toml::map::Map<String, TomlValue> = value.deserialize()?;
 
-        if let (Some(env), Some(default)) = (toml_map.get("env"), toml_map.get("default")) {
-            Ok(ConfigurationEntry::Detailed(DetailedConfigurationEntry {
-                env: env.as_str().map(|s| s.to_string()),
-                default: default.clone(),
-            }))
+        if let Some(env) = toml_map.get("env") {
+            let env_name = env
+                .as_str()
+                .ok_or_else(|| de::Error::custom("env name must be a string"))?;
+
+            let env_val = std::env::var(env_name).ok();
+            let default = toml_map.get("default").cloned();
+
+            match (env_val, default) {
+                (Some(env_val), _) => Ok(ConfigurationEntry::Env(env_val)),
+                (None, Some(default)) => Ok(ConfigurationEntry::Simple(default)),
+                (None, None) => Ok(ConfigurationEntry::UnsetEnv),
+            }
         } else {
             let str = toml::to_string(&toml_map).map_err(|e| de::Error::custom(e.to_string()))?;
 
