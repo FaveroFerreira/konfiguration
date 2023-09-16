@@ -46,8 +46,7 @@ impl Konfiguration {
         let manifest = toml::from_str::<ConfigurationManifest>(&text)?;
         // let simple_toml = simplify(manifest)?;
 
-        println!("{:?}\n", manifest);
-        println!("{manifest:?}");
+        println!("{:?}", manifest);
 
         Err(KonfigurationError::Entry("".to_string()))
     }

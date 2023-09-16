@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fmt;
 use std::fmt::Display;
 
 use crate::error::KonfigurationError;
@@ -176,44 +175,6 @@ impl ConfigurationEntry {
             ConfigurationEntry::Array(..) => "array",
             ConfigurationEntry::Table(..) => "table",
             ConfigurationEntry::Detailed(..) => "detailed",
-        }
-    }
-}
-
-impl Display for ConfigurationEntry {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ConfigurationEntry::String(s) => write!(f, "string \"{}\"", s),
-            ConfigurationEntry::Integer(i) => write!(f, "integer {}", i),
-            ConfigurationEntry::Float(fl) => write!(f, "float {}", fl),
-            ConfigurationEntry::Boolean(b) => write!(f, "boolean {}", b),
-            ConfigurationEntry::Array(ref arr) => {
-                write!(f, "array [")?;
-                for (i, v) in arr.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{}", v)?;
-                }
-                write!(f, "]")
-            }
-            ConfigurationEntry::Detailed(ref d) => {
-                write!(f, "detailed {{ env = \"{}\"", d.env)?;
-                if let Some(default) = d.default.as_ref() {
-                    write!(f, ", default = {}", default)?;
-                }
-                write!(f, " }}")
-            }
-            ConfigurationEntry::Table(t) => {
-                write!(f, "table {{")?;
-                for (i, (k, v)) in t.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{} = {}", k, v)?;
-                }
-                write!(f, " }}")
-            }
         }
     }
 }
