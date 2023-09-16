@@ -26,20 +26,21 @@ pub enum ConfigurationEntry {
     /// Represents a TOML array
     Array(Vec<ConfigurationEntry>),
 
-    /// Represents a TOML table in the following format:
-    /// ```toml
-    /// my-key = { env = "value" }
-    /// ```
-    /// or
-    /// ```toml
-    /// my-key = { env = "value", default = "default-value" }
-    /// ```
+    /// See `DetailedConfigurationEntry` for more information.
     Detailed(Box<DetailedConfigurationEntry>),
 
     /// Represents a TOML table that is not in the above format.
     Table(HashMap<String, ConfigurationEntry>),
 }
 
+/// Represents a TOML table in the following format:
+/// ```toml
+/// my-key = { env = "value" }
+/// ```
+/// or
+/// ```toml
+/// my-key = { env = "value", default = "default-value" }
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct DetailedConfigurationEntry {
     pub env: String,
