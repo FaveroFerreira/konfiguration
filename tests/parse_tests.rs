@@ -40,8 +40,21 @@ pub struct ConfigFileRepresentation {
     hash_with_no_default_env_unset: Option<HashMap<String, i32>>,
     hash_with_no_default_env_set: Option<HashMap<String, i32>>,
 
+    list: Vec<List>,
+
     nested: Nested,
     nested_do_not_exist: Option<Nested>,
+}
+
+#[derive(Debug, serde::Deserialize, PartialEq)]
+pub struct List {
+    s: Option<String>,
+    s_with_no_default: Option<String>,
+    i: i32,
+    f: f32,
+    b: bool,
+    array: Vec<i32>,
+    hash: HashMap<String, i32>,
 }
 
 #[derive(Debug, serde::Deserialize, PartialEq)]
@@ -167,6 +180,25 @@ fn can_parse_configs() {
         Some(vec![1, 2, 3]),
         "array with no default env set failed"
     );
+
+    assert_eq!(config.list[0].s, Some("im a string".to_string()));
+    assert_eq!(config.list[0].s_with_no_default, None);
+    assert_eq!(config.list[0].i, 42);
+    assert_eq!(config.list[0].f, 42.42);
+    assert_eq!(config.list[0].b, true);
+    assert_eq!(config.list[0].array, vec![1, 2, 3]);
+    assert_eq!(config.list[0].hash, config.hash);
+
+    assert_eq!(config.list[1].s, None);
+    assert_eq!(
+        config.list[1].s_with_no_default,
+        Some("im a string".to_string())
+    );
+    assert_eq!(config.list[1].i, 42);
+    assert_eq!(config.list[1].f, 42.42);
+    assert_eq!(config.list[1].b, true);
+    assert_eq!(config.list[1].array, vec![1, 2, 3]);
+    assert_eq!(config.list[1].hash, config.hash);
 
     let mut hash = HashMap::new();
     hash.insert("a".to_string(), 1);

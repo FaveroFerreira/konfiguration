@@ -10,5 +10,6 @@ pub enum ConfigurationEntry {
     Simple(TomlValue),
     Env(String),
     UnsetEnv,
+    Vec(Vec<ConfigurationEntry>),
     Table(HashMap<String, ConfigurationEntry>),
 }

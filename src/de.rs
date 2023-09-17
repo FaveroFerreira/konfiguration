@@ -137,9 +137,25 @@ impl TryFrom<Seq<'_, '_>> for ConfigurationEntry {
     type Error = serde_untagged::de::Error;
 
     fn try_from(value: Seq) -> Result<Self, Self::Error> {
-        let array: TomlValue = value.deserialize()?;
+        let vec: Vec<TomlValue> = value.deserialize()?;
 
-        Ok(ConfigurationEntry::Simple(array))
+        let mut entries = Vec::new();
+
+        for toml in vec {
+            if let TomlValue::Table(t) = toml {
+                let str = toml::to_string(&t).map_err(|e| de::Error::custom(e.to_string()))?;
+
+                let entry = ConfigurationEntry::Table(
+                    toml::from_str(&str).map_err(|e| de::Error::custom(e.to_string()))?,
+                );
+
+                entries.push(entry);
+            } else {
+                entries.push(ConfigurationEntry::Simple(toml));
+            }
+        }
+
+        Ok(ConfigurationEntry::Vec(entries))
     }
 }
 

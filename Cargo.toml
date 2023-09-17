@@ -1,6 +1,6 @@
 [package]
 name = "konfiguration"
-version = "1.1.0"
+version = "1.2.0"
 rust-version = "1.66.1"
 description = "Toml configuration loader with environment variables support."
 documentation = "https://docs.rs/konfiguration/"

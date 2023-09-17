@@ -34,6 +34,22 @@ hash_with_default = { env = "HASH_WITH_DEFAULT", default = { d = 4, e = 5, f = 6
 hash_with_no_default_env_unset = { env = "HASH_WITH_NO_DEFAULT_ENV_UNSET" }
 hash_with_no_default_env_set = { env = "HASH_WITH_NO_DEFAULT_ENV_SET" }
 
+[[list]]
+s = "im a string"
+i = 42
+f = 42.42
+b = true
+array = [1, 2, 3]
+hash = { a = 1, b = 2, c = 3 }
+
+[[list]]
+s_with_no_default = { env = "S_WITH_NO_DEFAULT" }
+i = 42
+f = 42.42
+b = true
+array = [1, 2, 3]
+hash = { a = 1, b = 2, c = 3 }
+
 [nested]
 s = "im a nested string"
 i = 42
