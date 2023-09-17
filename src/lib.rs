@@ -3,7 +3,7 @@ use std::fs;
 use serde::Deserialize;
 use toml::de::ValueDeserializer;
 
-use crate::error::KonfigurationResult;
+use crate::error::{KonfigurationError, KonfigurationResult};
 use crate::value::{ConfigurationEntry, ConfigurationManifest, TomlMap, TomlValue};
 
 mod de;
@@ -55,69 +55,61 @@ impl Konfiguration {
     }
 }
 
+impl TryFrom<ConfigurationEntry> for Option<TomlValue> {
+    type Error = KonfigurationError;
+
+    fn try_from(value: ConfigurationEntry) -> Result<Self, Self::Error> {
+        match value {
+            ConfigurationEntry::Simple(toml) => Ok(Some(toml)),
+            ConfigurationEntry::Env(env) => {
+                let toml = expand_with_retry(env)?;
+                Ok(Some(toml))
+            }
+            ConfigurationEntry::UnsetEnv => Ok(None),
+            ConfigurationEntry::Vec(vec) => {
+                let mut entries = Vec::new();
+
+                for entry in vec {
+                    match Self::try_from(entry)? {
+                        Some(entry) => entries.push(entry),
+                        None => continue,
+                    }
+                }
+
+                Ok(Some(TomlValue::Array(entries)))
+            }
+            ConfigurationEntry::Table(table) => {
+                let mut map = TomlMap::new();
+
+                for (key, entry) in table {
+                    match Self::try_from(entry)? {
+                        Some(entry) => {
+                            map.insert(key, entry);
+                        }
+                        None => continue,
+                    }
+                }
+
+                Ok(Some(TomlValue::Table(map)))
+            }
+        }
+    }
+}
+
 /// Takes a configuration manifest and simplifies it into a TOML value.
 fn simplify(manifest: ConfigurationManifest) -> KonfigurationResult<TomlMap> {
     let mut map = TomlMap::new();
 
-    for (key, config_entry) in manifest {
-        let value = match config_entry {
-            ConfigurationEntry::Simple(value) => value,
-            ConfigurationEntry::Env(env_value) => {
-                env_sanity_check(&env_value);
-                expand_with_retry(env_value)?
+    for (key, entry) in manifest {
+        match Option::<TomlValue>::try_from(entry)? {
+            Some(entry) => {
+                map.insert(key, entry);
             }
-            ConfigurationEntry::UnsetEnv => continue,
-            ConfigurationEntry::Table(table) => {
-                let simplified = simplify(table)?;
-
-                TomlValue::Table(simplified)
-            }
-            ConfigurationEntry::Vec(entries) => {
-                let mut vec = Vec::new();
-
-                simplify_entry(entries, &mut vec)?;
-
-                TomlValue::Array(vec)
-            }
-        };
-
-        map.insert(key, value);
+            None => continue,
+        }
     }
 
     Ok(map)
-}
-
-fn simplify_entry(
-    entries: Vec<ConfigurationEntry>,
-    vec: &mut Vec<TomlValue>,
-) -> KonfigurationResult<()> {
-    println!("array");
-    println!("{:#?}", entries);
-    println!("");
-
-    for entry in entries {
-        match entry {
-            ConfigurationEntry::Simple(value) => vec.push(value),
-            ConfigurationEntry::Env(env_value) => {
-                env_sanity_check(&env_value);
-                vec.push(expand_with_retry(env_value)?);
-            }
-            ConfigurationEntry::UnsetEnv => continue,
-            ConfigurationEntry::Table(table) => {
-                let simplified = simplify(table)?;
-
-                vec.push(TomlValue::Table(simplified));
-            }
-            ConfigurationEntry::Vec(entries) => {
-                let mut vec = Vec::new();
-
-                simplify_entry(entries, &mut vec)?;
-
-                TomlValue::Array(vec);
-            }
-        }
-    }
-    Ok(())
 }
 
 /// Not much to do here at this point, but we might want to add more checks in the future.
@@ -132,6 +124,8 @@ fn env_sanity_check(env: &str) {
 /// This is ugly because toml sometimes fails to deserialize a simple string
 /// I will be looking into this later.
 fn expand_with_retry(value: String) -> KonfigurationResult<TomlValue> {
+    env_sanity_check(&value);
+
     match TomlValue::deserialize(ValueDeserializer::new(&value)) {
         Ok(v) => Ok(v),
         Err(_) => Ok(TomlValue::String(value)),

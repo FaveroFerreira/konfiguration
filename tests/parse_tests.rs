@@ -181,6 +181,25 @@ fn can_parse_configs() {
         "array with no default env set failed"
     );
 
+    assert_eq!(config.list[0].s, Some("im a string".to_string()));
+    assert_eq!(config.list[0].s_with_no_default, None);
+    assert_eq!(config.list[0].i, 42);
+    assert_eq!(config.list[0].f, 42.42);
+    assert_eq!(config.list[0].b, true);
+    assert_eq!(config.list[0].array, vec![1, 2, 3]);
+    assert_eq!(config.list[0].hash, config.hash);
+
+    assert_eq!(config.list[1].s, None);
+    assert_eq!(
+        config.list[1].s_with_no_default,
+        Some("im a string".to_string())
+    );
+    assert_eq!(config.list[1].i, 42);
+    assert_eq!(config.list[1].f, 42.42);
+    assert_eq!(config.list[1].b, true);
+    assert_eq!(config.list[1].array, vec![1, 2, 3]);
+    assert_eq!(config.list[1].hash, config.hash);
+
     let mut hash = HashMap::new();
     hash.insert("a".to_string(), 1);
     hash.insert("b".to_string(), 2);
